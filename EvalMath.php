@@ -1,116 +1,68 @@
 <?php
+namespace Webit\Util\EvalMath;
 
-/*
-================================================================================
+/**
+ * Class EvalMath
+ */
+class EvalMath
+{
+    /**
+     * @var bool
+     */
+    public $suppress_errors = false;
 
-EvalMath - PHP Class to safely evaluate math expressions
-Copyright (C) 2005 Miles Kaufmann <http://www.twmagic.com/>
+    /**
+     * @var string
+     */
+    public $last_error = null;
 
-================================================================================
+    /**
+     * @var array
+     */
+    public $v = array('e'=>2.71,'pi'=>3.14); // variables (and constants)
 
-NAME
-    EvalMath - safely evaluate math expressions
-    
-SYNOPSIS
-    <?
-      include('evalmath.class.php');
-      $m = new EvalMath;
-      // basic evaluation:
-      $result = $m->evaluate('2+2');
-      // supports: order of operation; parentheses; negation; built-in functions
-      $result = $m->evaluate('-8(5/2)^2*(1-sqrt(4))-8');
-      // create your own variables
-      $m->evaluate('a = e^(ln(pi))');
-      // or functions
-      $m->evaluate('f(x,y) = x^2 + y^2 - 2x*y + 1');
-      // and then use them
-      $result = $m->evaluate('3*f(42,a)');
-    ?>
-      
-DESCRIPTION
-    Use the EvalMath class when you want to evaluate mathematical expressions 
-    from untrusted sources.  You can define your own variables and functions,
-    which are stored in the object.  Try it, it's fun!
+    /**
+     * @var array
+     */
+    public $f = array(); // user-defined functions
 
-METHODS
-    $m->evalute($expr)
-        Evaluates the expression and returns the result.  If an error occurs,
-        prints a warning and returns false.  If $expr is a function assignment,
-        returns true on success.
-    
-    $m->e($expr)
-        A synonym for $m->evaluate().
-    
-    $m->vars()
-        Returns an associative array of all user-defined variables and values.
-        
-    $m->funcs()
-        Returns an array of all user-defined functions.
+    /**
+     * @var array
+     */
+    public $vb = array('e', 'pi'); // constants
 
-PARAMETERS
-    $m->suppress_errors
-        Set to true to turn off warnings when evaluating expressions
-
-    $m->last_error
-        If the last evaluation failed, contains a string describing the error.
-        (Useful when suppress_errors is on).
-
-AUTHOR INFORMATION
-    Copyright 2005, Miles Kaufmann.
-
-LICENSE
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions are
-    met:
-    
-    1   Redistributions of source code must retain the above copyright
-        notice, this list of conditions and the following disclaimer.
-    2.  Redistributions in binary form must reproduce the above copyright
-        notice, this list of conditions and the following disclaimer in the
-        documentation and/or other materials provided with the distribution.
-    3.  The name of the author may not be used to endorse or promote
-        products derived from this software without specific prior written
-        permission.
-    
-    THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-    IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-    DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
-    INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-    HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-    STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
-
-*/
-
-class EvalMath {
-
-    var $suppress_errors = false;
-    var $last_error = null;
-    
-    var $v = array('e'=>2.71,'pi'=>3.14); // variables (and constants)
-    var $f = array(); // user-defined functions
-    var $vb = array('e', 'pi'); // constants
-    var $fb = array(  // built-in functions
+    /**
+     * @var array
+     */
+    public $fb = array(  // built-in functions
         'sin','sinh','arcsin','asin','arcsinh','asinh',
         'cos','cosh','arccos','acos','arccosh','acosh',
         'tan','tanh','arctan','atan','arctanh','atanh',
-        'sqrt','abs','ln','log');
-    
-    function EvalMath() {
+        'sqrt','abs','ln','log'
+    );
+
+    public function __construct()
+    {
         // make the variables a little more accurate
         $this->v['pi'] = pi();
         $this->v['e'] = exp(1);
     }
-    
-    function e($expr) {
+
+    /**
+     * @param string $expr
+     * @return mixed
+     */
+    public function e($expr)
+    {
         return $this->evaluate($expr);
     }
-    
-    function evaluate($expr) {
+
+    /**
+     * @param string $expr
+     * @return mixed
+     */
+    public function evaluate($expr)
+    {
         $this->last_error = null;
         $expr = trim($expr);
         if (substr($expr, -1, 1) == ';') $expr = substr($expr, 0, strlen($expr)-1); // strip semicolons at the end
@@ -149,46 +101,57 @@ class EvalMath {
             return $this->pfx($this->nfx($expr)); // straight up evaluation, woo
         }
     }
-    
-    function vars() {
+
+    /**
+     * @return array
+     */
+    public function vars()
+    {
         $output = $this->v;
         unset($output['pi']);
         unset($output['e']);
         return $output;
     }
-    
-    function funcs() {
+
+    /**
+     * @return array
+     */
+    public function funcs()
+    {
         $output = array();
         foreach ($this->f as $fnn=>$dat)
             $output[] = $fnn . '(' . implode(',', $dat['args']) . ')';
+
         return $output;
     }
 
     //===================== HERE BE INTERNAL METHODS ====================\\
 
     // Convert infix to postfix notation
-    function nfx($expr) {
+    public function nfx($expr)
+    {
     
         $index = 0;
-        $stack = new EvalMathStack;
+        $stack = new Stack;
         $output = array(); // postfix form of expression, to be passed to pfx()
-        $expr = trim(strtolower($expr));
+        // $expr = trim(strtolower($expr));
+        $expr = trim($expr);
         
-        $ops   = array('+', '-', '*', '/', '^', '_');
-        $ops_r = array('+'=>0,'-'=>0,'*'=>0,'/'=>0,'^'=>1); // right-associative operator?  
-        $ops_p = array('+'=>0,'-'=>0,'*'=>1,'/'=>1,'_'=>1,'^'=>2); // operator precedence
+        $ops   = array('+', '-', '*', '/', '^', '_', '%');
+        $ops_r = array('+'=>0,'-'=>0,'*'=>0,'/'=>0,'^'=>1, '%' => 0); // right-associative operator?
+        $ops_p = array('+'=>0,'-'=>0,'*'=>1,'/'=>1,'_'=>1,'^'=>2, '%'=>1); // operator precedence
         
         $expecting_op = false; // we use this in syntax-checking the expression
                                // and determining when a - is a negation
     
-        if (preg_match("/[^\w\s+*^\/()\.,-]/", $expr, $matches)) { // make sure the characters are all good
+        if (preg_match('/[^\%\w\s+*^\/()\.,-]/', $expr, $matches)) { // make sure the characters are all good
             return $this->trigger("illegal character '{$matches[0]}'");
         }
-    
+
         while(1) { // 1 Infinite Loop ;)
             $op = substr($expr, $index, 1); // get the first character at the current index
             // find out if we're currently at the beginning of a number/variable/function/parenthesis/operand
-            $ex = preg_match('/^([a-z]\w*\(?|\d+(?:\.\d*)?|\.\d+|\()/', substr($expr, $index), $match);
+            $ex = preg_match('/^([A-Za-z]\w*\(?|\d+(?:\.\d*)?|\.\d+|\()/', substr($expr, $index), $match);
             //===============
             if ($op == '-' and !$expecting_op) { // is it a negation instead of a minus?
                 $stack->push('_'); // put a negation on the stack
@@ -214,7 +177,7 @@ class EvalMath {
                     if (is_null($o2)) return $this->trigger("unexpected ')'");
                     else $output[] = $o2;
                 }
-                if (preg_match("/^([a-z]\w*)\($/", $stack->last(2), $matches)) { // did we just close a function?
+                if (preg_match("/^([A-Za-z]\w*)\($/", $stack->last(2), $matches)) { // did we just close a function?
                     $fnn = $matches[1]; // get the function name
                     $arg_count = $stack->pop(); // see how many arguments there were (cleverly stored on the stack, thank you)
                     $output[] = $stack->pop(); // pop the function and push onto the output
@@ -236,7 +199,7 @@ class EvalMath {
                     else $output[] = $o2; // pop the argument expression stuff and push onto the output
                 }
                 // make sure there was a function
-                if (!preg_match("/^([a-z]\w*)\($/", $stack->last(2), $matches))
+                if (!preg_match("/^([A-Za-z]\w*)\($/", $stack->last(2), $matches))
                     return $this->trigger("unexpected ','");
                 $stack->push($stack->pop()+1); // increment the argument count
                 $stack->push('('); // put the ( back on, we'll need to pop back to it again
@@ -251,7 +214,7 @@ class EvalMath {
             } elseif ($ex and !$expecting_op) { // do we now have a function/variable/number?
                 $expecting_op = true;
                 $val = $match[1];
-                if (preg_match("/^([a-z]\w*)\($/", $val, $matches)) { // may be func, or variable w/ implicit multiplication against parentheses...
+                if (preg_match("/^([A-Za-z]\w*)\($/", $val, $matches)) { // may be func, or variable w/ implicit multiplication against parentheses...
                     if (in_array($matches[1], $this->fb) or array_key_exists($matches[1], $this->f)) { // it's a func
                         $stack->push($val);
                         $stack->push(1);
@@ -293,15 +256,15 @@ class EvalMath {
     }
 
     // evaluate postfix notation
-    function pfx($tokens, $vars = array()) {
-        
+    public function pfx($tokens, $vars = array())
+    {
         if ($tokens == false) return false;
     
-        $stack = new EvalMathStack;
+        $stack = new Stack;
         
         foreach ($tokens as $token) { // nice and easy
             // if the token is a binary operator, pop two values off the stack, do the operation, and push the result back on
-            if (in_array($token, array('+', '-', '*', '/', '^'))) {
+            if (in_array($token, array('+', '-', '*', '/', '^', '%'))) {
                 if (is_null($op2 = $stack->pop())) return $this->trigger("internal error");
                 if (is_null($op1 = $stack->pop())) return $this->trigger("internal error");
                 switch ($token) {
@@ -316,6 +279,8 @@ class EvalMath {
                         $stack->push($op1/$op2); break;
                     case '^':
                         $stack->push(pow($op1, $op2)); break;
+                    case '%':
+                        $stack->push($op1%$op2); break;
                 }
             // if the token is a unary operator, pop one value off the stack, do the operation, and push it back on
             } elseif ($token == "_") {
@@ -327,7 +292,7 @@ class EvalMath {
                     if (is_null($op1 = $stack->pop())) return $this->trigger("internal error");
                     $fnn = preg_replace("/^arc/", "a", $fnn); // for the 'arc' trig synonyms
                     if ($fnn == 'ln') $fnn = 'log';
-                    $stack->push($fnn($op1)); // perfectly safe variable function call
+                    eval('$stack->push(' . $fnn . '($op1));'); // perfectly safe eval()
                 } elseif (array_key_exists($fnn, $this->f)) { // user function
                     // get args
                     $args = array();
@@ -355,36 +320,34 @@ class EvalMath {
     }
     
     // trigger an error, but nicely, if need be
-    function trigger($msg) {
+    public function trigger($msg)
+    {
         $this->last_error = $msg;
-        if (!$this->suppress_errors) trigger_error($msg, E_USER_WARNING);
+        if (!$this->suppress_errors)
+        {
+            echo "\nError found in:";
+            $this->debugPrintCallingFunction();
+            
+            trigger_error($msg, E_USER_WARNING);
+        }        
         return false;
     }
-}
 
-// for internal use
-class EvalMathStack {
-
-    var $stack = array();
-    var $count = 0;
-    
-    function push($val) {
-        $this->stack[$this->count] = $val;
-        $this->count++;
-    }
-    
-    function pop() {
-        if ($this->count > 0) {
-            $this->count--;
-            return $this->stack[$this->count];
+    # Prints the file name, function name, and 
+    # line number which called your function
+    # (not this function, then one that  called 
+    # it to begin with) 
+    public function debugPrintCallingFunction()
+    {
+        $file = 'n/a';
+        $func = 'n/a'; 
+        $line = 'n/a';
+        $debugTrace = debug_backtrace();
+        if (isset($debugTrace[1])) {
+            $file = $debugTrace[1]['file'] ? $debugTrace[1]['file'] : 'n/a';
+            $line = $debugTrace[1]['line'] ? $debugTrace[1]['line'] : 'n/a';
         }
-        return null;
-    }
-    
-    function last($n=1) {
-        if (isset($this->stack[$this->count-$n])) {
-          return $this->stack[$this->count-$n];
-        }
-        return;
+        if (isset($debugTrace[2])) $func = $debugTrace[2]['function'] ? $debugTrace[2]['function'] : 'n/a';
+        echo "\n$file, $func, $line\n";
     }
 }
