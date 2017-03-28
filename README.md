@@ -55,7 +55,7 @@ METHODS
 ~~~php
 $m->evaluate($expr);
 ~~~
-Evaluates the expression and returns the result. If an error occurs, prints a warning and returns false. If `php $expr` is a function assignment, returns true on success.
+Evaluates the expression and returns the result. If an error occurs, prints a warning and returns false. If `$expr` is a function assignment, returns `true` on success.
 ~~~php    
 $m->e($expr);
 ~~~
@@ -74,7 +74,7 @@ PARAMETERS
 ~~~php
 $m->suppress_errors;
 ~~~
-Set to true to turn off warnings when evaluating expressions
+Set to `true` to turn off warnings when evaluating expressions
 ~~~php
 $m->last_error;
 ~~~
