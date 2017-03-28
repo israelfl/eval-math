@@ -24,7 +24,10 @@ To use it just require this extension in your `composer.json` file:
 ~~~
 
 Or just:
+~~~
 composer require israelfl/eval-math
+~~~
+
 
 SYNOPSIS
 --------
