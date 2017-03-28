@@ -1,5 +1,5 @@
 <?php
-namespace Webit\Util\EvalMath;
+namespace israelfl\evalmath;
 
 /**
  * Class EvalMath
