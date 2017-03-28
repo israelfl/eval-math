@@ -52,25 +52,30 @@ $result = $m->evaluate('3*f(42,a)');
 
 METHODS
 -------
-    `$m->evaluate($expr)`
-        Evaluates the expression and returns the result.  If an error occurs,
-        prints a warning and returns false.  If $expr is a function assignment,
-        returns true on success.
-    
-    `$m->e($expr)`
-        A synonym for $m->evaluate().
-    
-    `$m->vars()`
-        Returns an associative array of all user-defined variables and values.
-        
-    `$m->funcs()`
-        Returns an array of all user-defined functions.
+~~~php
+$m->evaluate($expr);
+~~~
+Evaluates the expression and returns the result. If an error occurs, prints a warning and returns false. If ~~~php $expr ~~~ is a function assignment, returns true on success.
+~~~php    
+$m->e($expr);
+~~~
+A synonym for $m->evaluate().
+~~~php
+$m->vars();
+~~~
+Returns an associative array of all user-defined variables and values.
+~~~php
+$m->funcs();
+~~~
+Returns an array of all user-defined functions.
 
 PARAMETERS
 ----------
-    `$m->suppress_errors`
-        Set to true to turn off warnings when evaluating expressions
-
-    `$m->last_error`
-        If the last evaluation failed, contains a string describing the error.
-        (Useful when suppress_errors is on).
+~~~php
+$m->suppress_errors;
+~~~
+Set to true to turn off warnings when evaluating expressions
+~~~php
+$m->last_error;
+~~~
+If the last evaluation failed, contains a string describing the error. (Useful when suppress_errors is on).
