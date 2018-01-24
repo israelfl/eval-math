@@ -3,7 +3,7 @@
 	"description": "Safely evaluate mathematical expressions",
 	"type": "php-class",
 	"keywords": ["php","class","math","expression","eval"],
-	"license": "MIT License",
+	"license": "MIT",
 	"authors": [
 		{
 			"name": "Israel Falcón",
